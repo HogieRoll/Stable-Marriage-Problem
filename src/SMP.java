@@ -1,6 +1,7 @@
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -18,20 +19,85 @@ public class SMP {
     
     static OptimalPreference OP;
     
-    ArrayList <SMP_Person>Men;
+    static int prefSize;
+    
+    //ArrayList <SMP_Person>Men;
     ArrayList <SMP_Person>Women;
 
     public static void main(String[] args) {
-        // TODO Parse args for File and M/W Optimal Preference
-        ArgHandler(args);
-        // TODO Read Input File and Parse into Structure
-        //FormatArguments();
-        // TODO Use Input File and M/W Optimal Preference to find Stable Matching
+        ArrayList <SMP_Person>Men = new ArrayList();
+        ArrayList <SMP_Person>Women = new ArrayList();
+        
+        ArrayList <SMP_Person>OptGroup = new ArrayList();
+        ArrayList <SMP_Person>PesGroup = new ArrayList();
+
+        ArgHandler(args, Men, Women);
+
+        if(OP == OptimalPreference.MEN_OPTIMAL)
+        {
+            OptGroup = Men;
+            PesGroup = Women;
+        }
+        else
+        {
+            OptGroup = Women;
+            PesGroup = Men;
+        }
+        
+        System.out.println(OptGroup.get(0).ProposedList.size());
+        System.out.println(Men.get(0).ProposedList.size());
+        GSAlgo(OptGroup, PesGroup);
+        
+        OptGroup.forEach((n) -> System.out.println("("+(n.Index+1)+","+(n.MatchedPartnerIndex+1)+")"));
         // TODO Format Output Response
         // TODO Print Output Response
     }
 
-    private static void ArgHandler(String[] args) {
+    private static void GSAlgo(ArrayList<SMP_Person> optGroup, ArrayList<SMP_Person> pesGroup) {
+        Stack <SMP_Person> FreeOptPersonStack = new Stack();
+
+        for(int i = 0; i < prefSize; i++)
+        {
+            FreeOptPersonStack.push(optGroup.get(i));
+        }
+        while(!FreeOptPersonStack.empty())
+        {
+            SMP_Person PrefPerson = FreeOptPersonStack.pop();
+
+            for(int i = 0; i < prefSize; i++)
+            {
+                int PesPersonIndex = PrefPerson.PreferenceList.get(i) - 1;
+                SMP_Person PesPerson = pesGroup.get(PesPersonIndex);
+                int ProposedTo = PrefPerson.ProposedList.get(PesPersonIndex);
+                if(0 == ProposedTo)
+                {
+                    int PesPersonMatchedIndex = PesPerson.MatchedPartnerIndex;//0 based
+                    if(PesPersonMatchedIndex == -1)
+                    {
+                        //The other person is free!
+                        //Match
+                        pesGroup.get(PesPersonIndex).MatchedPartnerIndex = PrefPerson.Index;
+                        optGroup.get(PrefPerson.Index).MatchedPartnerIndex = PesPerson.Index;
+                        optGroup.get(PrefPerson.Index).ProposedList.set(PesPersonIndex, 1);
+                        break;
+                    }
+                    else if(PesPerson.PreferenceList.indexOf(PesPersonMatchedIndex + 1) > PesPerson.PreferenceList.indexOf(PrefPerson.Index + 1))
+                    {
+                        pesGroup.get(PesPersonIndex).MatchedPartnerIndex = PrefPerson.Index;
+                        optGroup.get(PrefPerson.Index).MatchedPartnerIndex = PesPerson.Index;
+                        optGroup.get(PrefPerson.Index).ProposedList.set(PesPersonIndex, 1);
+                        optGroup.get(PesPersonMatchedIndex).MatchedPartnerIndex = -1;
+                        FreeOptPersonStack.push(optGroup.get(PesPersonMatchedIndex));
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private static void ArgHandler(String[] args, ArrayList<SMP_Person> men, ArrayList<SMP_Person> women2) {
+        
+        int startingMenIndex = 1;
         // TODO Auto-generated method stub
         if(args.length != expectedArgCount)
         {
@@ -50,6 +116,22 @@ public class SMP {
             List<CSVRecord> csvRecords = csvFileParser.getRecords();
             
             System.out.println(csvRecords.toString());
+            prefSize = Integer.parseInt(csvRecords.get(0).get(0));
+            for(int i = 0; i < prefSize; i++)
+            {
+                ArrayList MenPrefList = new <Integer>ArrayList();
+                ArrayList WomPrefList = new <Integer>ArrayList();
+                ArrayList ProposedList = new <Integer>ArrayList();
+                System.out.println(csvRecords.get(startingMenIndex + i));
+                for(int j = 0; j < prefSize; j++)
+                {
+                    MenPrefList.add(j, Integer.parseInt(csvRecords.get(startingMenIndex + i).get(j)));
+                    WomPrefList.add(j, Integer.parseInt(csvRecords.get(startingMenIndex + prefSize + i).get(j)));
+                    ProposedList.add(0);
+                }
+                men.add(i, new SMP_Person(MenPrefList, ProposedList, i));
+                women2.add(i, new SMP_Person(WomPrefList, ProposedList, i));
+            }
             csvFileParser.close();
         }
         catch (Exception e) {
