@@ -44,8 +44,8 @@ public class SMP {
             PesGroup = Men;
         }
         
-        System.out.println(OptGroup.get(0).ProposedList.size());
-        System.out.println(Men.get(0).ProposedList.size());
+        //System.out.println(OptGroup.get(0).ProposedList.size());
+        //System.out.println(Men.get(0).ProposedList.size());
         GSAlgo(OptGroup, PesGroup);
         
         OptGroup.forEach((n) -> System.out.println("("+(n.Index+1)+","+(n.MatchedPartnerIndex+1)+")"));
@@ -115,14 +115,14 @@ public class SMP {
             //Get a list of CSV file records
             List<CSVRecord> csvRecords = csvFileParser.getRecords();
             
-            System.out.println(csvRecords.toString());
+            //System.out.println(csvRecords.toString());
             prefSize = Integer.parseInt(csvRecords.get(0).get(0));
             for(int i = 0; i < prefSize; i++)
             {
                 ArrayList MenPrefList = new <Integer>ArrayList();
                 ArrayList WomPrefList = new <Integer>ArrayList();
                 ArrayList ProposedList = new <Integer>ArrayList();
-                System.out.println(csvRecords.get(startingMenIndex + i));
+                //System.out.println(csvRecords.get(startingMenIndex + i));
                 for(int j = 0; j < prefSize; j++)
                 {
                     MenPrefList.add(j, Integer.parseInt(csvRecords.get(startingMenIndex + i).get(j)));
